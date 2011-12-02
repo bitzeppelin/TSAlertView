@@ -570,26 +570,22 @@ const CGFloat kTSAlertView_ColumnMargin = 10.;
 
 - (void)onKeyboardWillShow:(NSNotification *)note
 {
-    NSValue *boundsValue =
-            [[note userInfo] objectForKey:UIKeyboardBoundsUserInfoKey];
-    NSValue *centerValue =
-            [[note userInfo] objectForKey:UIKeyboardCenterEndUserInfoKey];
-    CGPoint kbCenter = [[self superview] convertPoint:[centerValue CGPointValue]
-            fromView:nil];
-    CGRect kbBounds = [boundsValue CGRectValue];
-    CGRect kbFrame = CGRectOffset(kbBounds,
-            kbCenter.x - kbBounds.size.width / 2.,
-            kbCenter.y - kbBounds.size.height / 2.);
+    #if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_3_2
+        NSValue *keyboardBoundsValue = [[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey];
+    #else
+        NSValue *keyboardBoundsValue = [[notification userInfo] objectForKey:UIKeyboardBoundsUserInfoKey];
+    #endif
+    CGRect keyboardFrame = [[self superview] convertRect:[keyboardBoundsValue CGRectValue] fromView:nil];
     
-    if (CGRectIntersectsRect([self frame], kbFrame)) {
+    if (CGRectIntersectsRect([self frame], keyboardFrame)) {
         CGPoint c = [self center];
-        
-        if ([self frame].size.height > kbFrame.origin.y - 20.) {
-            [self setMaxHeight:kbFrame.origin.y - 20.];
+        CGFloat y = self.superview.bounds.size.height - MIN(keyboardFrame.size.width, keyboardFrame.size.height);
+        if ([self frame].size.height > y - 20.) {
+            [self setMaxHeight:y - 20.];
             [self sizeToFit];
             [self layoutSubviews];
         }
-        c.y = kbFrame.origin.y / 2.;
+        c.y = y / 2.;
         [UIView beginAnimations:nil context:NULL];
         [UIView setAnimationDuration:.2];
         [self setCenter:c];
